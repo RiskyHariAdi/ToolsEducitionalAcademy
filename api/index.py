@@ -1,7 +1,8 @@
 from flask import Flask, render_template_string, request, jsonify
 import json
-from dotenv import load_dotenv
+import os
 
+API_KEY = os.getenv("API_KEY")
 app = Flask(__name__)
 
 # --- Konfigurasi Backend ---
