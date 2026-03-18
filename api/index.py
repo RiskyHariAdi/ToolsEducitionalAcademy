@@ -1,6 +1,8 @@
 from flask import Flask, render_template_string, request, jsonify
 import json
+import os
 
+API_KEY = os.getenv("API_KEY")
 app = Flask(__name__)
 
 # --- Konfigurasi Backend ---
@@ -8,8 +10,6 @@ CREATOR_NAME = "Risky HariAdi"
 # Nomor WA admin dengan kode negara 62 untuk integrasi wa.me yang benar
 ADMIN_PHONE = "6287791881535" 
 
-# Mengambil API Key dari Environment Variable (Aman)
-GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 
 # --- Database Sederhana (In-Memory) ---
 # Catatan: Di Vercel data ini akan reset secara berkala. 
@@ -17,7 +17,7 @@ GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 db = {
     "users": [
         {"username": "admin", "password": "085691230968", "role": "admin", "name": "Risky HariAdi"},
-        {"username": "mahasiswa", "password": "123", "role": "user", "name": "Budi Mahasiswa"}
+        {"username": "mahasiswa", "password": "123", "role": "user", "name": "user1"}
     ]
 }
 
@@ -58,8 +58,7 @@ HTML_TEMPLATE = """
         };
 
         const App = () => {
-            // --- KONFIGURASI ---
-            const apiKey = "AIzaSyAxqBKizU6aXb5fE-YYNzFO07RDenX9h6o"; // API KEY TELAH DIMASUKKAN
+
             const MODEL_NAME = "gemini-2.5-flash";
             const CREATOR_NAME = "Risky HariAdi";
             const ADMIN_NUMBER = "6287791881535"; 
@@ -671,21 +670,6 @@ HTML_TEMPLATE = """
 @app.route('/')
 def index():
     return render_template_string(HTML_TEMPLATE)
-
-@app.route('/api/chat', methods=['POST'])
-def proxy_chat():
-    user_input = request.json.get("message")
-    model_name = "gemini-2.5-flash" # Gunakan versi stabil
-    
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent?key={GEMINI_API_KEY}"
-    
-    payload = {
-        "contents": [{"parts": [{"text": user_input}]}],
-        "systemInstruction": {"parts": [{"text": "Kamu adalah IG.STORE AI, asisten akademik mahasiswa Indonesia..."}]}
-    }
-    
-    response = requests.post(url, json=payload)
-    return jsonify(response.json())
 
 @app.route('/api/users', methods=['GET', 'POST'])
 def handle_users():
