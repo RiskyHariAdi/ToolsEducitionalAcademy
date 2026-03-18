@@ -1,5 +1,6 @@
 from flask import Flask, render_template_string, request, jsonify
 import json
+from dotenv import load_dotenv
 
 app = Flask(__name__)
 
@@ -56,8 +57,8 @@ HTML_TEMPLATE = """
         };
 
         const App = () => {
-            // --- KONFIGURASI ---
-            const apiKey = "AIzaSyAxqBKizU6aXb5fE-YYNzFO07RDenX9h6o"; // API KEY TELAH DIMASUKKAN
+
+            const apiKey = "AIzaSyDBmPzhk-Q2tu6SGn4FheA1YRtc_sJQ1G4";
             const MODEL_NAME = "gemini-2.5-flash";
             const CREATOR_NAME = "Risky HariAdi";
             const ADMIN_NUMBER = "6287791881535"; 
