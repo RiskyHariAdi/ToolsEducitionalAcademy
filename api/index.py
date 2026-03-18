@@ -59,7 +59,7 @@ HTML_TEMPLATE = """
 
         const App = () => {
 
-            const apiKey = "AIzaSyDBmPzhk-Q2tu6SGn4FheA1YRtc_sJQ1G4";
+            const apiKey = "";
             const MODEL_NAME = "gemini-2.5-flash";
             const CREATOR_NAME = "Risky HariAdi";
             const ADMIN_NUMBER = "6287791881535"; 
