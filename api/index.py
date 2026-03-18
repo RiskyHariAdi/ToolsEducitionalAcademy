@@ -17,7 +17,7 @@ ADMIN_PHONE = "6287791881535"
 db = {
     "users": [
         {"username": "admin", "password": "085691230968", "role": "admin", "name": "Risky HariAdi"},
-        {"username": "mahasiswa", "password": "123", "role": "user", "name": "user1"}
+        {"username": "user1", "password": "123", "role": "user", "name": "Hallo pengguna baru"}
     ]
 }
 
