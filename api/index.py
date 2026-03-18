@@ -680,6 +680,12 @@ def handle_users():
         return jsonify(db['users'])
     return jsonify(db['users'])
 
+@app.route('/api/chat', methods=['POST'])
+def proxy_chat():
+    user_input = request.json.get("message")
+    # Pastikan variabel di bawah ini pakai API_KEY
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={API_KEY}"
+
 if __name__ == '__main__':
     # Parameter use_reloader=False ditambahkan untuk memperbaiki [WinError 10038] di Windows
     app.run(debug=True, use_reloader=False)
