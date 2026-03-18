@@ -1,7 +1,6 @@
-import json
 import os
+import requests
 from flask import Flask, render_template_string, request, jsonify
-import requests # Pastikan instal: pip install requests
 
 app = Flask(__name__)
 
@@ -697,11 +696,29 @@ HTML_TEMPLATE = """
 {% endraw %}
 """
 
-# --- Routes API ---
+# --- 3. ROUTES API (Wajib di Bawah Variabel) ---
 
 @app.route('/')
 def index():
+    # Sekarang HTML_TEMPLATE sudah aman karena didefinisikan di atas
     return render_template_string(HTML_TEMPLATE)
+
+@app.route('/api/chat', methods=['POST'])
+def proxy_chat():
+    user_input = request.json.get("message")
+    # Gunakan 1.5-flash karena 2.5 belum tentu stabil/tersedia di tiap region
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={GEMINI_API_KEY}"
+    
+    payload = {
+        "contents": [{"parts": [{"text": user_input}]}],
+        "systemInstruction": {"parts": [{"text": "Kamu adalah IG.STORE AI, asisten akademik yang membantu."}]}
+    }
+    
+    try:
+        response = requests.post(url, json=payload, timeout=25)
+        return jsonify(response.json())
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/api/users', methods=['GET', 'POST'])
 def handle_users():
@@ -712,6 +729,4 @@ def handle_users():
         return jsonify(db['users'])
     return jsonify(db['users'])
 
-if __name__ == '__main__':
-    # Parameter use_reloader=False ditambahkan untuk memperbaiki [WinError 10038] di Windows
-    app.run(debug=True, use_reloader=False)
+# JANGAN PAKAI app.run() jika deploy ke Vercel, biarkan saja.
