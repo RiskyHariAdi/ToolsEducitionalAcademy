@@ -1,9 +1,34 @@
-from flask import Flask, render_template_string, request, jsonify
 import json
 import os
+from flask import Flask, render_template_string, request, jsonify
+import requests # Pastikan instal: pip install requests
 
-API_KEY = os.getenv("API_KEY")
 app = Flask(__name__)
+
+# Mengambil API Key dari Environment Variable (Aman)
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
+
+@app.route('/')
+def index():
+    return render_template_string(HTML_TEMPLATE)
+
+# Proxy route untuk menyembunyikan API Key
+@app.route('/api/chat', methods=['POST'])
+def proxy_chat():
+    user_input = request.json.get("message")
+    model_name = "gemini-2.5-flash" # Gunakan versi stabil
+    
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent?key={GEMINI_API_KEY}"
+    
+    payload = {
+        "contents": [{"parts": [{"text": user_input}]}],
+        "systemInstruction": {"parts": [{"text": "Kamu adalah IG.STORE AI, asisten akademik mahasiswa Indonesia..."}]}
+    }
+    
+    response = requests.post(url, json=payload)
+    return jsonify(response.json())
+
+# ... (Route /api/users tetap sama)
 
 # --- Konfigurasi Backend ---
 CREATOR_NAME = "Risky HariAdi"
@@ -17,7 +42,7 @@ ADMIN_PHONE = "6287791881535"
 db = {
     "users": [
         {"username": "admin", "password": "085691230968", "role": "admin", "name": "Risky HariAdi"},
-        {"username": "mahasiswa", "password": "123", "role": "user", "name": "Budi Mahasiswa"}
+        {"username": "user1", "password": "123", "role": "user", "name": "pengguna baru"}
     ]
 }
 
@@ -59,8 +84,6 @@ HTML_TEMPLATE = """
 
         const App = () => {
 
-            const apiKey = "AIzaSyB8xQEDaHqz-wOjN8MFeCnPWJikbQwN-Ic";
-            const MODEL_NAME = "gemini-2.5-flash";
             const CREATOR_NAME = "Risky HariAdi";
             const ADMIN_NUMBER = "6287791881535"; 
 
@@ -87,7 +110,7 @@ HTML_TEMPLATE = """
             const [gpaCourses, setGpaCourses] = useState([
                 { id: 1, name: "Algoritma", sks: 3, grade: "A" }
             ]);
-            const [messages, setMessages] = useState([{ role: 'assistant', content: "Halo! Saya EduHub AI. Ada yang bisa saya bantu dengan tugas kuliahmu hari ini?" }]);
+            const [messages, setMessages] = useState([{ role: 'assistant', content: "Halo! Saya IG.STORE AI. Ada yang bisa saya bantu dengan tugas kuliahmu hari ini?" }]);
             const [transactions, setTransactions] = useState([
                 { id: 1, title: "Uang Saku", amount: 1500000, type: "income" }
             ]);
@@ -150,32 +173,40 @@ HTML_TEMPLATE = """
                 setLoginForm({ username: "", password: "" });
             };
 
-            // Handlers: AI
+            // --- Handlers: AI ---
             const handleSendMessage = async () => {
-                if (!chatInput.trim()) return;
-                
-                const currentInput = chatInput;
-                setMessages(prev => [...prev, { role: 'user', content: currentInput }]);
-                setChatInput("");
+            if (!chatInput.trim()) return;
+            
+            const currentInput = chatInput;
+            setMessages(prev => [...prev, { role: 'user', content: currentInput }]);
+            setChatInput("");
+            setIsLoading(true);
 
-                if (!apiKey) {
-                    setTimeout(() => {
-                        setMessages(prev => [...prev, { role: 'assistant', content: "Peringatan: API Key Gemini belum dimasukkan. Mohon masukkan kunci API Anda agar asisten AI dapat memberikan jawaban nyata." }]);
-                    }, 500);
-                    return;
-                }
+    try {
+        // PERUBAHAN DI SINI: Panggil endpoint internal Flask, bukan API Google langsung
+        const response = await fetch('/api/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                message: currentInput 
+            })
+        });
 
-                setIsLoading(true);
-                try {
-                    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${apiKey}`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            contents: [{ parts: [{ text: currentInput }] }],
-                            systemInstruction: { parts: [{ text: "Kamu adalah EduHub AI, asisten akademik mahasiswa Indonesia yang cerdas dan membantu. Berikan jawaban yang informatif, akademis, dan ramah." }] }
-                        })
-                    });
+            if (!response.ok) throw new Error("Gagal menghubungi server backend.");
 
+            const data = await response.json();
+            
+            // Ambil teks dari respon yang dikirim balik oleh Flask
+            const aiText = data.candidates?.[0]?.content?.parts?.[0]?.text || "Maaf, saya tidak mendapatkan respon.";
+            
+            setMessages(prev => [...prev, { role: 'assistant', content: String(aiText) }]);
+        } catch (err) {
+            console.error(err);
+            setMessages(prev => [...prev, { role: 'assistant', content: "Terjadi kesalahan koneksi ke backend. Pastikan server berjalan dan API Key terkonfigurasi di Vercel." }]);
+        } finally {
+            setIsLoading(false);
+        }
+    };
                     if (!response.ok) throw new Error("Gagal menghubungi AI");
 
                     const data = await response.json();
