@@ -2,7 +2,8 @@ from flask import Flask, render_template_string, request, jsonify
 import json
 import os
 
-API_KEY = os.getenv("API_KEY")
+API_KEY = os.environ.get("API_KEY")
+
 app = Flask(__name__)
 
 # --- Konfigurasi Backend ---
@@ -679,30 +680,21 @@ def handle_users():
             db['users'].append(new_user)
         return jsonify(db['users'])
     return jsonify(db['users'])
-
+    
 @app.route('/api/chat', methods=['POST'])
 def proxy_chat():
-    # Gunakan get untuk menghindari error jika json kosong
-    data = request.get_json()
-    user_input = data.get("message") if data else ""
-    
-    # Gunakan gemini-1.5-flash (paling stabil untuk saat ini)
+    user_input = request.json.get("message")
+    # Pastikan variabel di bawah ini pakai API_KEY
     url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={API_KEY}"
-    
     payload = {
         "contents": [{"parts": [{"text": user_input}]}]
     }
-    
     try:
-        # Kirim request ke Google
-        response = requests.post(url, json=payload, timeout=25)
-        
-        # Kirim balik hasilnya ke browser
+        response = requests.post(url, json=payload)
         return jsonify(response.json())
     except Exception as e:
-        # Jika ada error (misal timeout atau API mati)
         return jsonify({"error": str(e)}), 500
-        
+    
 if __name__ == '__main__':
     # Parameter use_reloader=False ditambahkan untuk memperbaiki [WinError 10038] di Windows
     app.run(debug=True, use_reloader=False)
