@@ -3,11 +3,10 @@ import json
 import os
 from dotenv import load_dotenv
 
-load_dotenv()
-
-API_KEY = os.environ.get("API_KEY")
+API_KEY = os.getenv("API_KEY")
 
 app = Flask(__name__)
+load_dotenv()
 
 # --- Konfigurasi Backend ---
 CREATOR_NAME = "Risky HariAdi"
@@ -683,20 +682,6 @@ def handle_users():
             db['users'].append(new_user)
         return jsonify(db['users'])
     return jsonify(db['users'])
-    
-@app.route('/api/chat', methods=['POST'])
-def proxy_chat():
-    user_input = request.json.get("message")
-    # Pastikan variabel di bawah ini pakai API_KEY
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={API_KEY}"
-    payload = {
-        "contents": [{"parts": [{"text": user_input}]}]
-    }
-    try:
-        response = requests.post(url, json=payload)
-        return jsonify(response.json())
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
     
 if __name__ == '__main__':
     # Parameter use_reloader=False ditambahkan untuk memperbaiki [WinError 10038] di Windows
